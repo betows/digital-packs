@@ -6,13 +6,14 @@ import { getPackPath } from "./packs.ts";
 import { getLiveProduct, getProduct, PRODUCTS } from "./products.ts";
 
 describe("catalog", () => {
-  it("exposes five live SKUs with official Stripe price IDs", () => {
+  it("exposes six live SKUs with official Stripe price IDs", () => {
     const live = [
       ["outbound-ops-kit", "price_1UJlu44v69r4DPC8TWmMaWwK", "outbound-ops-kit.zip"],
       ["gbp-post-pack", "price_1UJltG4v69r4DPC8dwKEfa3I", "gbp-post-pack.zip"],
       ["missed-call-recovery", "price_1UJlwd4v69r4DPC8Ao7fsixe", "missed-call-recovery-pack.zip"],
       ["ads-swipe-pack", "price_1UJlwf4v69r4DPC8JZu7mVWh", "ads-swipe-pack.zip"],
       ["notion-crm-lite", "price_1UJweHGum6mar7mKS7M4BocS", "notion-crm-lite.zip"],
+      ["landing-page-pack", "price_1UJwlfGum6mar7mKl69AgJHC", "landing-page-pack.zip"],
     ] as const;
     for (const [sku, priceId, packFile] of live) {
       const product = getLiveProduct(sku);
@@ -21,16 +22,14 @@ describe("catalog", () => {
       assert.equal(existsSync(getPackPath(packFile)), true);
     }
     assert.equal(getProduct("notion-crm-lite")?.stripePriceEnv, "STRIPE_PRICE_NOTION_CRM_LITE");
+    assert.equal(getProduct("landing-page-pack")?.stripePriceEnv, "STRIPE_PRICE_LANDING_PAGE_PACK");
   });
 
-  it("keeps coming-soon SKUs off the live checkout path", () => {
-    const soon = ["landing-page-pack"];
-    for (const sku of soon) {
-      assert.equal(getProduct(sku)?.status, "coming-soon");
-      assert.equal(getLiveProduct(sku), undefined);
-    }
+  it("keeps unknown SKUs off the live checkout path", () => {
     assert.equal(getLiveProduct("ads-swipe"), undefined);
-    assert.equal(PRODUCTS.filter((product) => product.status === "live").length, 5);
+    assert.equal(getLiveProduct("coming-soon"), undefined);
+    assert.equal(PRODUCTS.filter((product) => product.status === "live").length, 6);
+    assert.equal(PRODUCTS.filter((product) => product.status === "coming-soon").length, 0);
   });
 });
 

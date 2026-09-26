@@ -11,6 +11,7 @@ Next.js (App Router) + Tailwind sales site for instant-download digital kits. Lo
 | `missed-call-recovery` | Missed-Call Recovery Pack | $29 | `price_1UJlwd4v69r4DPC8Ao7fsixe` |
 | `ads-swipe-pack` | Local Ads Swipe Pack | $35 | `price_1UJlwf4v69r4DPC8JZu7mVWh` |
 | `notion-crm-lite` | Notion CRM Lite | $39 | `price_1UJweHGum6mar7mKS7M4BocS` |
+| `landing-page-pack` | Landing Page Pack | $99 | `price_1UJwlfGum6mar7mKl69AgJHC` |
 
 Gated files live in `packs/` (not under `public/`):
 
@@ -19,8 +20,7 @@ Gated files live in `packs/` (not under `public/`):
 - `packs/missed-call-recovery-pack.zip`
 - `packs/ads-swipe-pack.zip`
 - `packs/notion-crm-lite.zip`
-
-Coming soon (cards shown, Buy disabled): Landing Page Pack $99.
+- `packs/landing-page-pack.zip`
 
 ## Checkout and delivery
 
@@ -40,6 +40,7 @@ STRIPE_PRICE_GBP_POST_PACK=price_1UJltG4v69r4DPC8dwKEfa3I
 STRIPE_PRICE_MISSED_CALL_RECOVERY=price_1UJlwd4v69r4DPC8Ao7fsixe
 STRIPE_PRICE_ADS_SWIPE_PACK=price_1UJlwf4v69r4DPC8JZu7mVWh
 STRIPE_PRICE_NOTION_CRM_LITE=price_1UJweHGum6mar7mKS7M4BocS
+STRIPE_PRICE_LANDING_PAGE_PACK=price_1UJwlfGum6mar7mKl69AgJHC
 ```
 
 `STRIPE_SECRET_KEY` is required for checkout, success verification, and download. Price env vars override the catalog defaults; do not invent other Price IDs. The publishable key is reserved for Stripe.js if you add client confirmation later — hosted Checkout does not need it to redirect.

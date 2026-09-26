@@ -21,6 +21,7 @@ export const LIVE_PRICE_IDS = {
   "missed-call-recovery": "price_1UJlwd4v69r4DPC8Ao7fsixe",
   "ads-swipe-pack": "price_1UJlwf4v69r4DPC8JZu7mVWh",
   "notion-crm-lite": "price_1UJweHGum6mar7mKS7M4BocS",
+  "landing-page-pack": "price_1UJwlfGum6mar7mKl69AgJHC",
 } as const;
 
 export const PRODUCTS: Product[] = [
@@ -150,10 +151,21 @@ export const PRODUCTS: Product[] = [
     priceUsd: 99,
     tagline: "Copy and section map for a one-page service site.",
     description:
-      "Headlines, proof blocks, and a section order you can hand to any builder.",
-    includes: ["Page copy", "Section map"],
-    notIncluded: ["A hosted website or developer hours"],
-    status: "coming-soon",
+      "English page copy for dental, salon, and HVAC/plumbing — plus a section map you can hand to any builder. Not a hosted site.",
+    includes: [
+      "Page copy for dental, salon, and HVAC / plumbing",
+      "Universal section map (hero through final CTA)",
+      "One-page builder SOP",
+      "Wireframe notes for Framer, Webflow, Carrd, or WordPress",
+    ],
+    notIncluded: [
+      "A hosted website",
+      "Developer hours",
+    ],
+    status: "live",
+    stripePriceId: LIVE_PRICE_IDS["landing-page-pack"],
+    stripePriceEnv: "STRIPE_PRICE_LANDING_PAGE_PACK",
+    packFile: "landing-page-pack.zip",
   },
 ];
 
