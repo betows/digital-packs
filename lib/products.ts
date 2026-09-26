@@ -20,6 +20,7 @@ export const LIVE_PRICE_IDS = {
   "gbp-post-pack": "price_1UJltG4v69r4DPC8dwKEfa3I",
   "missed-call-recovery": "price_1UJlwd4v69r4DPC8Ao7fsixe",
   "ads-swipe-pack": "price_1UJlwf4v69r4DPC8JZu7mVWh",
+  "notion-crm-lite": "price_1UJweHGum6mar7mKS7M4BocS",
 } as const;
 
 export const PRODUCTS: Product[] = [
@@ -126,10 +127,22 @@ export const PRODUCTS: Product[] = [
     priceUsd: 39,
     tagline: "A small pipeline for operators who hate CRMs.",
     description:
-      "A lightweight Notion pipeline: lead, booked, showed, paid. Nothing else.",
-    includes: ["Notion schema", "Status definitions"],
-    notIncluded: ["Hosted CRM software"],
-    status: "coming-soon",
+      "A lightweight Notion pipeline: Lead → Booked → Showed → Paid. Schema, views, CSV template, and a one-page SOP — nothing else.",
+    includes: [
+      "Leads database schema (Lead / Booked / Showed / Paid)",
+      "Status definitions and four filtered views",
+      "CSV import template with example rows",
+      "One-page Notion build SOP",
+    ],
+    notIncluded: [
+      "Hosted CRM software",
+      "Automations",
+      "An SMS sender",
+    ],
+    status: "live",
+    stripePriceId: LIVE_PRICE_IDS["notion-crm-lite"],
+    stripePriceEnv: "STRIPE_PRICE_NOTION_CRM_LITE",
+    packFile: "notion-crm-lite.zip",
   },
   {
     sku: "landing-page-pack",
