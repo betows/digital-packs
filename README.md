@@ -27,6 +27,7 @@ Gated files live in `packs/` (not under `public/`):
 1. `POST /api/checkout` with `{ "sku": "<live-sku>" }` creates a Stripe Checkout Session (`mode: payment`), sets `metadata.sku`, and uses success `/success?session_id={CHECKOUT_SESSION_ID}` / cancel `/`.
 2. `/success` retrieves the session and shows **Download** only when Stripe reports `payment_status=paid` for that SKU.
 3. `GET /api/download?sku=&session_id=` re-verifies paid + matching `metadata.sku`, then streams the zip. There is no ungated public pack URL.
+4. Stripe `checkout.session.completed` hits `POST /api/webhooks/stripe`. After signature verification, the handler POSTs a small JSON sale payload to `SALE_NOTIFY_WEBHOOK_URL` when that env is set.
 
 ## Environment
 
@@ -35,6 +36,9 @@ Copy `.env.example` to `.env.local`:
 ```
 STRIPE_SECRET_KEY=
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
+STRIPE_WEBHOOK_SECRET=
+SALE_NOTIFY_WEBHOOK_URL=
+SALE_NOTIFY_AUTHORIZATION=
 STRIPE_PRICE_OUTBOUND_OPS_KIT=price_1UJlu44v69r4DPC8TWmMaWwK
 STRIPE_PRICE_GBP_POST_PACK=price_1UJltG4v69r4DPC8dwKEfa3I
 STRIPE_PRICE_MISSED_CALL_RECOVERY=price_1UJlwd4v69r4DPC8Ao7fsixe
@@ -45,11 +49,17 @@ STRIPE_PRICE_LANDING_PAGE_PACK=price_1UJwlfGum6mar7mKl69AgJHC
 
 `STRIPE_SECRET_KEY` is required for checkout, success verification, and download. Price env vars override the catalog defaults; do not invent other Price IDs. The publishable key is reserved for Stripe.js if you add client confirmation later — hosted Checkout does not need it to redirect.
 
+`STRIPE_WEBHOOK_SECRET`, `SALE_NOTIFY_WEBHOOK_URL`, and `SALE_NOTIFY_AUTHORIZATION` are server-only. Do not prefix them with `NEXT_PUBLIC_`. The webhook secret is required to verify Stripe signatures. The notify URL is optional during setup — if it is unset, the route still returns 200 after a valid signature so Stripe does not retry forever. When `SALE_NOTIFY_AUTHORIZATION` is set (full header value, e.g. `Bearer …`), it is sent as the `Authorization` header on the scoreboard POST.
+
+Subscribe the Stripe Dashboard endpoint to **checkout.session.completed** only, pointing at `https://digital-packs.vercel.app/api/webhooks/stripe`.
+
 ## Scripts
 
 ```bash
 npm install
 npm run dev
+npm test
+npm run lint
 npm run build
 npm start
 ```
