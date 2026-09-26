@@ -4,27 +4,28 @@ import { assertPaidSessionForSku } from "./entitlement.ts";
 import { getLiveProduct, getProduct, PRODUCTS } from "./products.ts";
 
 describe("catalog", () => {
-  it("exposes two live SKUs with official Stripe price IDs", () => {
-    const outbound = getLiveProduct("outbound-ops-kit");
-    const gbp = getLiveProduct("gbp-post-pack");
-    assert.equal(outbound?.stripePriceId, "price_1UJlu44v69r4DPC8TWmMaWwK");
-    assert.equal(gbp?.stripePriceId, "price_1UJltG4v69r4DPC8dwKEfa3I");
-    assert.equal(outbound?.packFile, "outbound-ops-kit.zip");
-    assert.equal(gbp?.packFile, "gbp-post-pack.zip");
+  it("exposes four live SKUs with official Stripe price IDs", () => {
+    const live = [
+      ["outbound-ops-kit", "price_1UJlu44v69r4DPC8TWmMaWwK", "outbound-ops-kit.zip"],
+      ["gbp-post-pack", "price_1UJltG4v69r4DPC8dwKEfa3I", "gbp-post-pack.zip"],
+      ["missed-call-recovery", "price_1UJlwd4v69r4DPC8Ao7fsixe", "missed-call-recovery-pack.zip"],
+      ["ads-swipe-pack", "price_1UJlwf4v69r4DPC8JZu7mVWh", "ads-swipe-pack.zip"],
+    ] as const;
+    for (const [sku, priceId, packFile] of live) {
+      const product = getLiveProduct(sku);
+      assert.equal(product?.stripePriceId, priceId);
+      assert.equal(product?.packFile, packFile);
+    }
   });
 
   it("keeps coming-soon SKUs off the live checkout path", () => {
-    const soon = [
-      "missed-call-recovery",
-      "ads-swipe",
-      "notion-crm-lite",
-      "landing-page-pack",
-    ];
+    const soon = ["notion-crm-lite", "landing-page-pack"];
     for (const sku of soon) {
       assert.equal(getProduct(sku)?.status, "coming-soon");
       assert.equal(getLiveProduct(sku), undefined);
     }
-    assert.equal(PRODUCTS.filter((product) => product.status === "live").length, 2);
+    assert.equal(getLiveProduct("ads-swipe"), undefined);
+    assert.equal(PRODUCTS.filter((product) => product.status === "live").length, 4);
   });
 });
 

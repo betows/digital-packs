@@ -18,6 +18,8 @@ export type Product = {
 export const LIVE_PRICE_IDS = {
   "outbound-ops-kit": "price_1UJlu44v69r4DPC8TWmMaWwK",
   "gbp-post-pack": "price_1UJltG4v69r4DPC8dwKEfa3I",
+  "missed-call-recovery": "price_1UJlwd4v69r4DPC8Ao7fsixe",
+  "ads-swipe-pack": "price_1UJlwf4v69r4DPC8JZu7mVWh",
 } as const;
 
 export const PRODUCTS: Product[] = [
@@ -72,25 +74,51 @@ export const PRODUCTS: Product[] = [
   },
   {
     sku: "missed-call-recovery",
-    name: "Missed-Call Recovery",
+    name: "Missed-Call Recovery Pack",
     priceUsd: 29,
-    tagline: "Same-day scripts for the slot that just cancelled.",
+    tagline: "SMS + email for the lead who called and nobody answered.",
     description:
-      "Text and call scripts to fill an empty chair or truck before the day is gone.",
-    includes: ["Recovery scripts", "Same-day offer frames"],
-    notIncluded: ["A dialer or SMS sender"],
-    status: "coming-soon",
+      "Day 0 / 1 / 3 templates for dental, salon, and HVAC/plumbing — plus a one-page SOP and a simple log sheet. First text within 15 minutes beats a perfect Day 3.",
+    includes: [
+      "SMS sequences for dental, salon, and home services",
+      "Email Day 0 / Day 3 for all verticals",
+      "One-page SOP",
+      "Tracker / log sheet",
+    ],
+    notIncluded: [
+      "A phone system",
+      "A dialer",
+      "A CRM",
+      "An SMS sender",
+    ],
+    status: "live",
+    stripePriceId: LIVE_PRICE_IDS["missed-call-recovery"],
+    stripePriceEnv: "STRIPE_PRICE_MISSED_CALL_RECOVERY",
+    packFile: "missed-call-recovery-pack.zip",
   },
   {
-    sku: "ads-swipe",
-    name: "Ads Swipe",
+    sku: "ads-swipe-pack",
+    name: "Local Ads Swipe Pack",
     priceUsd: 35,
-    tagline: "Local-service ad angles you can rewrite today.",
+    tagline: "20 Meta ad swipes and 10 organic captions.",
     description:
-      "Swipe copy for the offers local shops actually run — not generic SaaS ads.",
-    includes: ["Ad angles", "Rewrite prompts"],
-    notIncluded: ["Ad accounts or media spend"],
-    status: "coming-soon",
+      "Paste-ready hooks for dental, salon, and HVAC/plumbing — plus a one-page SOP for Meta Ads Manager. You bring the photos and the billing.",
+    includes: [
+      "20 Meta (Facebook / Instagram) ad swipes",
+      "10 organic captions",
+      "Dental, salon, and HVAC / plumbing tracks",
+      "One-page paste SOP",
+    ],
+    notIncluded: [
+      "An ad account",
+      "Pixel setup",
+      "Creative design",
+      "Managed ads",
+    ],
+    status: "live",
+    stripePriceId: LIVE_PRICE_IDS["ads-swipe-pack"],
+    stripePriceEnv: "STRIPE_PRICE_ADS_SWIPE_PACK",
+    packFile: "ads-swipe-pack.zip",
   },
   {
     sku: "notion-crm-lite",
