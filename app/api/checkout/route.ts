@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { getLiveProduct, getStripePriceId } from "@/lib/products";
+import { startCheckout } from "@/lib/fulfillment";
+import { getLiveProduct } from "@/lib/products";
 import { getRequestOrigin, getStripe } from "@/lib/stripe";
 
 export const runtime = "nodejs";
@@ -18,8 +19,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Missing sku" }, { status: 400 });
   }
 
-  const product = getLiveProduct(sku);
-  if (!product) {
+  if (!getLiveProduct(sku)) {
     return NextResponse.json(
       { error: "Unknown or unavailable SKU" },
       { status: 400 },
@@ -27,24 +27,11 @@ export async function POST(request: Request) {
   }
 
   try {
-    const stripe = getStripe();
-    const origin = getRequestOrigin(request);
-    const session = await stripe.checkout.sessions.create({
-      mode: "payment",
-      line_items: [{ price: getStripePriceId(product), quantity: 1 }],
-      success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/`,
-      metadata: { sku: product.sku },
-    });
-
-    if (!session.url) {
-      return NextResponse.json(
-        { error: "Stripe did not return a checkout URL" },
-        { status: 502 },
-      );
+    const result = await startCheckout(getStripe(), sku, getRequestOrigin(request));
+    if (!result.ok) {
+      return NextResponse.json({ error: result.error }, { status: result.status });
     }
-
-    return NextResponse.json({ url: session.url, sessionId: session.id });
+    return NextResponse.json({ url: result.url, sessionId: result.sessionId });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Checkout failed";

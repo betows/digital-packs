@@ -1,7 +1,5 @@
-import { readFile } from "node:fs/promises";
 import { NextResponse } from "next/server";
-import { assertPaidSessionForSku } from "@/lib/entitlement";
-import { getPackPath } from "@/lib/packs";
+import { fulfillPaidPack } from "@/lib/fulfillment";
 import { getLiveProduct } from "@/lib/products";
 import { getStripe } from "@/lib/stripe";
 
@@ -20,8 +18,7 @@ export async function GET(request: Request) {
     );
   }
 
-  const product = getLiveProduct(sku);
-  if (!product?.packFile) {
+  if (!getLiveProduct(sku)) {
     return NextResponse.json(
       { error: "Unknown or unavailable SKU" },
       { status: 400 },
@@ -29,24 +26,16 @@ export async function GET(request: Request) {
   }
 
   try {
-    const stripe = getStripe();
-    const session = await stripe.checkout.sessions.retrieve(sessionId);
-    const entitlement = assertPaidSessionForSku(session, sku);
-    if (!entitlement.ok) {
-      return NextResponse.json(
-        { error: entitlement.error },
-        { status: entitlement.status },
-      );
+    const result = await fulfillPaidPack(getStripe(), sku, sessionId);
+    if (!result.ok) {
+      return NextResponse.json({ error: result.error }, { status: result.status });
     }
 
-    const filePath = getPackPath(product.packFile);
-    const data = await readFile(filePath);
-
-    return new NextResponse(Uint8Array.from(data), {
+    return new NextResponse(Uint8Array.from(result.data), {
       status: 200,
       headers: {
         "Content-Type": "application/zip",
-        "Content-Disposition": `attachment; filename="${product.packFile}"`,
+        "Content-Disposition": `attachment; filename="${result.filename}"`,
         "Cache-Control": "private, no-store",
         "X-Content-Type-Options": "nosniff",
       },
