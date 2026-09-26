@@ -46,6 +46,11 @@ export function getSaleNotifyWebhookUrl(): string | null {
   return url ? url : null;
 }
 
+export function getSaleNotifyAuthorization(): string | null {
+  const value = process.env.SALE_NOTIFY_AUTHORIZATION?.trim();
+  return value ? value : null;
+}
+
 export function extractSkuFromSession(session: CheckoutSessionNotifySource): string {
   const fromMeta = session.metadata?.sku?.trim();
   if (fromMeta) return fromMeta;
@@ -93,9 +98,17 @@ export async function notifySaleScoreboard(
   }
 
   try {
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+    const authorization = getSaleNotifyAuthorization();
+    if (authorization) {
+      headers.Authorization = authorization;
+    }
+
     const response = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify(payload),
       signal: AbortSignal.timeout(8_000),
     });

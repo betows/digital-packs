@@ -121,8 +121,10 @@ describe("notifySaleScoreboard", () => {
   });
 
   it("POSTs the placar JSON when the notify URL is set", async () => {
-    const previous = process.env.SALE_NOTIFY_WEBHOOK_URL;
+    const previousUrl = process.env.SALE_NOTIFY_WEBHOOK_URL;
+    const previousAuth = process.env.SALE_NOTIFY_AUTHORIZATION;
     process.env.SALE_NOTIFY_WEBHOOK_URL = "https://scoreboard.test/hook";
+    delete process.env.SALE_NOTIFY_AUTHORIZATION;
     let posted: { url: string; init?: RequestInit } | undefined;
     globalThis.fetch = (async (url, init) => {
       posted = { url: String(url), init };
@@ -131,13 +133,34 @@ describe("notifySaleScoreboard", () => {
     try {
       assert.equal(await notifySaleScoreboard(samplePayload), "sent");
       assert.equal(posted?.url, "https://scoreboard.test/hook");
-      assert.equal(
-        (posted?.init?.headers as Record<string, string>)["Content-Type"],
-        "application/json",
-      );
+      const headers = posted?.init?.headers as Record<string, string>;
+      assert.equal(headers["Content-Type"], "application/json");
+      assert.equal(headers.Authorization, undefined);
       assert.deepEqual(JSON.parse(String(posted?.init?.body)), samplePayload);
     } finally {
-      restoreEnv("SALE_NOTIFY_WEBHOOK_URL", previous);
+      restoreEnv("SALE_NOTIFY_WEBHOOK_URL", previousUrl);
+      restoreEnv("SALE_NOTIFY_AUTHORIZATION", previousAuth);
+    }
+  });
+
+  it("adds Authorization when SALE_NOTIFY_AUTHORIZATION is set", async () => {
+    const previousUrl = process.env.SALE_NOTIFY_WEBHOOK_URL;
+    const previousAuth = process.env.SALE_NOTIFY_AUTHORIZATION;
+    process.env.SALE_NOTIFY_WEBHOOK_URL = "https://scoreboard.test/hook";
+    process.env.SALE_NOTIFY_AUTHORIZATION = "Bearer test-scoreboard-token";
+    let posted: { url: string; init?: RequestInit } | undefined;
+    globalThis.fetch = (async (url, init) => {
+      posted = { url: String(url), init };
+      return new Response("ok", { status: 200 });
+    }) as typeof fetch;
+    try {
+      assert.equal(await notifySaleScoreboard(samplePayload), "sent");
+      const headers = posted?.init?.headers as Record<string, string>;
+      assert.equal(headers["Content-Type"], "application/json");
+      assert.equal(headers.Authorization, "Bearer test-scoreboard-token");
+    } finally {
+      restoreEnv("SALE_NOTIFY_WEBHOOK_URL", previousUrl);
+      restoreEnv("SALE_NOTIFY_AUTHORIZATION", previousAuth);
     }
   });
 });
