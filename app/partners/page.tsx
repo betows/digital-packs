@@ -66,10 +66,9 @@ export default function PartnersPage() {
             Promo codes at checkout
           </h2>
           <p className="mt-3 text-sm leading-6 text-muted sm:text-base">
-            Stripe Checkout already shows a promo-code field (
-            <code className="text-cream/80">allow_promotion_codes</code>
-            ). After approval we can issue a partner code in the Stripe
-            Dashboard. We are not publishing a working code on this page.
+            Stripe Checkout already shows a promo-code box. After approval we
+            can issue a partner code in the Stripe Dashboard. We are not
+            publishing a working code on this page.
           </p>
         </section>
       </article>

@@ -1,4 +1,10 @@
-const PACK_FILES = [
+type PackFile = {
+  name: string;
+  kind: "file" | "folder";
+  indent?: number;
+};
+
+const PACK_FILES: PackFile[] = [
   { name: "README.txt", kind: "file" },
   { name: "missed-call-recovery/", kind: "folder" },
   { name: "MISSED-CALL-RECOVERY-PACK.md", kind: "file", indent: 1 },
@@ -11,7 +17,7 @@ const PACK_FILES = [
   { name: "posts-dental.md", kind: "file", indent: 1 },
   { name: "posts-salon.md", kind: "file", indent: 1 },
   { name: "calendar-30-day.md", kind: "file", indent: 1 },
-] as const;
+];
 
 export function PackPreview() {
   return (

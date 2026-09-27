@@ -2,8 +2,9 @@ import { readFile } from "node:fs/promises";
 import type Stripe from "stripe";
 import { assertPaidSessionForSku } from "./entitlement";
 import { getPackPath } from "./packs";
-import { getLiveProduct, getStripePriceId } from "./products";
-import { safeRelativePath, utmToMetadata, type UtmParams } from "./utm";
+import { buildCheckoutSessionParams } from "./checkout-session";
+import { getLiveProduct } from "./products";
+import type { UtmParams } from "./utm";
 
 export type CheckoutStart =
   | { ok: true; url: string; sessionId: string }
@@ -33,18 +34,9 @@ export async function startCheckout(
     return { ok: false, status: 400, error: "Unknown or unavailable SKU" };
   }
 
-  const cancelPath = safeRelativePath(options?.cancelPath);
-  const session = await stripe.checkout.sessions.create({
-    mode: "payment",
-    line_items: [{ price: getStripePriceId(product), quantity: 1 }],
-    success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${origin}${cancelPath}`,
-    allow_promotion_codes: true,
-    metadata: {
-      sku: product.sku,
-      ...utmToMetadata(options?.utm ?? {}),
-    },
-  });
+  const session = await stripe.checkout.sessions.create(
+    buildCheckoutSessionParams(product, origin, options),
+  );
 
   if (!session.url) {
     return {

@@ -2,13 +2,6 @@ import type { Metadata } from "next";
 import { BuyButton } from "@/components/buy-button";
 import { formatUsd, getProduct } from "@/lib/products";
 
-const outbound = getProduct("outbound-ops-kit");
-const missedCall = getProduct("missed-call-recovery");
-
-if (!outbound || !missedCall) {
-  throw new Error("Lead-magnet SKUs are missing from the catalog");
-}
-
 export const metadata: Metadata = {
   title: "Free Day 0 sample — Outbound Ops Kit",
   description:
@@ -22,6 +15,12 @@ const SUBJECTS = [
 ] as const;
 
 export default function FreeSamplePage() {
+  const outbound = getProduct("outbound-ops-kit");
+  const missedCall = getProduct("missed-call-recovery");
+  if (!outbound || !missedCall) {
+    throw new Error("Lead-magnet SKUs are missing from the catalog");
+  }
+
   return (
     <main className="flex-1">
       <article className="mx-auto max-w-3xl px-5 pt-16 pb-20 sm:px-8 sm:pt-24">
