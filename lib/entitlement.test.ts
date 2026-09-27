@@ -6,7 +6,7 @@ import { getPackPath } from "./packs.ts";
 import { getLiveProduct, getProduct, getStripePriceId, PRODUCTS } from "./products.ts";
 
 describe("catalog", () => {
-  it("exposes seven live SKUs with official Stripe price IDs", () => {
+  it("exposes eight live SKUs with official Stripe price IDs", () => {
     const live = [
       ["outbound-ops-kit", "price_1UJlu44v69r4DPC8TWmMaWwK", "outbound-ops-kit.zip"],
       ["gbp-post-pack", "price_1UJltG4v69r4DPC8dwKEfa3I", "gbp-post-pack.zip"],
@@ -31,6 +31,32 @@ describe("catalog", () => {
     assert.equal(rocket?.stripePriceEnv, "STRIPE_PRICE_REVIEW_REFERRAL_ROCKET");
     assert.equal(rocket?.stripePriceId, undefined);
     assert.equal(existsSync(getPackPath("review-referral-rocket.zip")), true);
+
+    const bundle = getLiveProduct("front-desk-bundle");
+    assert.equal(bundle?.name, "Front Desk Bundle");
+    assert.equal(bundle?.priceUsd, 79);
+    assert.equal(bundle?.packFile, "front-desk-bundle.zip");
+    assert.equal(bundle?.stripePriceEnv, "STRIPE_PRICE_FRONT_DESK_BUNDLE");
+    assert.equal(bundle?.stripePriceId, "price_1UKMKiGum6mar7mKlPdMyGG3");
+    assert.equal(bundle?.badge, "Best for front desk");
+    assert.equal(existsSync(getPackPath("front-desk-bundle.zip")), true);
+    assert.equal(PRODUCTS.some((product) => /no-show/i.test(product.sku + product.name)), false);
+  });
+
+  it("reads front-desk-bundle checkout price from STRIPE_PRICE_FRONT_DESK_BUNDLE", () => {
+    const product = getLiveProduct("front-desk-bundle");
+    assert.ok(product);
+    const previous = process.env.STRIPE_PRICE_FRONT_DESK_BUNDLE;
+    process.env.STRIPE_PRICE_FRONT_DESK_BUNDLE = "price_test_front_desk";
+    try {
+      assert.equal(getStripePriceId(product), "price_test_front_desk");
+    } finally {
+      if (previous === undefined) {
+        delete process.env.STRIPE_PRICE_FRONT_DESK_BUNDLE;
+      } else {
+        process.env.STRIPE_PRICE_FRONT_DESK_BUNDLE = previous;
+      }
+    }
   });
 
   it("reads review-referral-rocket checkout price from STRIPE_PRICE_REVIEW_REFERRAL_ROCKET", () => {
@@ -52,7 +78,7 @@ describe("catalog", () => {
   it("keeps unknown SKUs off the live checkout path", () => {
     assert.equal(getLiveProduct("ads-swipe"), undefined);
     assert.equal(getLiveProduct("coming-soon"), undefined);
-    assert.equal(PRODUCTS.filter((product) => product.status === "live").length, 7);
+    assert.equal(PRODUCTS.filter((product) => product.status === "live").length, 8);
     assert.equal(PRODUCTS.filter((product) => product.status === "coming-soon").length, 0);
   });
 });

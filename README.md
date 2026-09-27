@@ -13,6 +13,7 @@ Next.js (App Router) + Tailwind sales site for instant-download digital kits. Lo
 | `notion-crm-lite` | Notion CRM Lite | $39 | `price_1UJweHGum6mar7mKS7M4BocS` |
 | `landing-page-pack` | Landing Page Pack | $99 | `price_1UJwlfGum6mar7mKl69AgJHC` |
 | `review-referral-rocket` | Review & Referral Rocket Pack | $29 | `STRIPE_PRICE_REVIEW_REFERRAL_ROCKET` |
+| `front-desk-bundle` | Front Desk Bundle | $79 | `price_1UKMKiGum6mar7mKlPdMyGG3` |
 
 Gated files live in `packs/` (not under `public/`):
 
@@ -23,10 +24,20 @@ Gated files live in `packs/` (not under `public/`):
 - `packs/notion-crm-lite.zip`
 - `packs/landing-page-pack.zip`
 - `packs/review-referral-rocket.zip`
+- `packs/front-desk-bundle.zip`
+
+Public lead magnet (ungated):
+
+- `/free` — Day 0 sample from Outbound Ops Kit (HTML + `public/samples/outbound-ops-kit-day0.md`)
+- `/partners` — wholesale stub (bundle $40 / pack $15; reply PARTNER)
+
+Cold links should keep UTM query params. Buy buttons forward `utm_source`, `utm_medium`, `utm_campaign`, `utm_content`, and `utm_term` into Stripe Checkout metadata. Suggested campaign: `?utm_source=cold|gumroad|etsy|dir|reddit&utm_campaign=sprint1003`.
+
+Checkout sessions set `allow_promotion_codes: true` so a Dashboard promo (for approved partners) can be entered later. No public coupon is published as live.
 
 ## Checkout and delivery
 
-1. `POST /api/checkout` with `{ "sku": "<live-sku>" }` creates a Stripe Checkout Session (`mode: payment`), sets `metadata.sku`, and uses success `/success?session_id={CHECKOUT_SESSION_ID}` / cancel `/`.
+1. `POST /api/checkout` with `{ "sku": "<live-sku>" }` creates a Stripe Checkout Session (`mode: payment`), sets `metadata.sku` (plus any `utm_*` fields), enables promo codes, and uses success `/success?session_id={CHECKOUT_SESSION_ID}` / cancel back to the page the buyer left.
 2. `/success` retrieves the session and shows **Download** only when Stripe reports `payment_status=paid` for that SKU.
 3. `GET /api/download?sku=&session_id=` re-verifies paid + matching `metadata.sku`, then streams the zip. There is no ungated public pack URL.
 4. Stripe `checkout.session.completed` hits `POST /api/webhooks/stripe`. After signature verification, the handler POSTs a small JSON sale payload to `SALE_NOTIFY_WEBHOOK_URL` when that env is set.
@@ -48,6 +59,7 @@ STRIPE_PRICE_ADS_SWIPE_PACK=price_1UJlwf4v69r4DPC8JZu7mVWh
 STRIPE_PRICE_NOTION_CRM_LITE=price_1UJweHGum6mar7mKS7M4BocS
 STRIPE_PRICE_LANDING_PAGE_PACK=price_1UJwlfGum6mar7mKl69AgJHC
 STRIPE_PRICE_REVIEW_REFERRAL_ROCKET=
+STRIPE_PRICE_FRONT_DESK_BUNDLE=price_1UKMKiGum6mar7mKlPdMyGG3
 ```
 
 `STRIPE_SECRET_KEY` is required for checkout, success verification, and download. Price env vars override the catalog defaults; do not invent other Price IDs. The publishable key is reserved for Stripe.js if you add client confirmation later — hosted Checkout does not need it to redirect.

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { pickUtmParams } from "@/lib/utm";
 
 type BuyButtonProps = {
   sku: string;
@@ -34,10 +35,15 @@ export function BuyButton({
     setPending(true);
     setError(null);
     try {
+      const pageUrl = new URL(window.location.href);
       const response = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sku }),
+        body: JSON.stringify({
+          sku,
+          utm: pickUtmParams(pageUrl.searchParams),
+          cancelPath: `${pageUrl.pathname}${pageUrl.search}`,
+        }),
       });
       const data = (await response.json()) as { url?: string; error?: string };
       if (!response.ok || !data.url) {

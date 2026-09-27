@@ -2,15 +2,24 @@ import { NextResponse } from "next/server";
 import { startCheckout } from "@/lib/fulfillment";
 import { getLiveProduct } from "@/lib/products";
 import { getRequestOrigin, getStripe } from "@/lib/stripe";
+import { pickUtmParams, safeRelativePath } from "@/lib/utm";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   let sku: unknown;
+  let utm: unknown;
+  let cancelPath: unknown;
   try {
-    const body = (await request.json()) as { sku?: unknown };
+    const body = (await request.json()) as {
+      sku?: unknown;
+      utm?: unknown;
+      cancelPath?: unknown;
+    };
     sku = body?.sku;
+    utm = body?.utm;
+    cancelPath = body?.cancelPath;
   } catch {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
@@ -27,7 +36,19 @@ export async function POST(request: Request) {
   }
 
   try {
-    const result = await startCheckout(getStripe(), sku, getRequestOrigin(request));
+    const result = await startCheckout(
+      getStripe(),
+      sku,
+      getRequestOrigin(request),
+      {
+        utm: pickUtmParams(
+          utm && typeof utm === "object" && !Array.isArray(utm)
+            ? (utm as Record<string, unknown>)
+            : undefined,
+        ),
+        cancelPath: safeRelativePath(cancelPath),
+      },
+    );
     if (!result.ok) {
       return NextResponse.json({ error: result.error }, { status: result.status });
     }
