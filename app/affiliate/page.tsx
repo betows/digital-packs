@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-const AFFILIATE_LINK = "{{AFFILIATE_LINK}}";
+const AFFILIATE_LINK = "https://systeme.io/tr/2/161/14922346076/39837047/445452911f84dee46075870778d52229991a92c9e";
 
 const FEATURES = [
   "Funnels / landing pages",
