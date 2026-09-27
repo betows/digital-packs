@@ -15,8 +15,8 @@ export function ProductCard({ product }: { product: Product }) {
       }`}
     >
       <div className="mb-4 flex items-center justify-between gap-3 text-[11px] font-semibold tracking-[0.16em] uppercase">
-        <span className={live ? "text-brass" : "text-muted"}>
-          {live ? "Instant download" : "Coming soon"}
+        <span className={product.badge || live ? "text-brass" : "text-muted"}>
+          {product.badge || (live ? "Instant download" : "Coming soon")}
         </span>
         <span className="text-muted">{priceLabel}</span>
       </div>
@@ -38,6 +38,9 @@ export function ProductCard({ product }: { product: Product }) {
           Not included: {product.notIncluded.join(" · ")}
         </p>
       ) : null}
+      <p className="mt-3 text-xs leading-5 text-muted">
+        Instant download after Stripe · 30-day email refund
+      </p>
       <div className="mt-auto pt-6">
         <BuyButton
           sku={product.sku}

@@ -3,6 +3,7 @@ import type Stripe from "stripe";
 import { assertPaidSessionForSku } from "./entitlement";
 import { getPackPath } from "./packs";
 import { getLiveProduct, getStripePriceId } from "./products";
+import { safeRelativePath, utmToMetadata, type UtmParams } from "./utm";
 
 export type CheckoutStart =
   | { ok: true; url: string; sessionId: string }
@@ -25,18 +26,24 @@ export async function startCheckout(
   stripe: StripeCheckout,
   sku: string,
   origin: string,
+  options?: { utm?: UtmParams; cancelPath?: string },
 ): Promise<CheckoutStart> {
   const product = getLiveProduct(sku);
   if (!product) {
     return { ok: false, status: 400, error: "Unknown or unavailable SKU" };
   }
 
+  const cancelPath = safeRelativePath(options?.cancelPath);
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
     line_items: [{ price: getStripePriceId(product), quantity: 1 }],
     success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${origin}/`,
-    metadata: { sku: product.sku },
+    cancel_url: `${origin}${cancelPath}`,
+    allow_promotion_codes: true,
+    metadata: {
+      sku: product.sku,
+      ...utmToMetadata(options?.utm ?? {}),
+    },
   });
 
   if (!session.url) {

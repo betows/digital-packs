@@ -10,6 +10,7 @@ export type Product = {
   notIncluded: string[];
   status: ProductStatus;
   featured?: boolean;
+  badge?: string;
   stripePriceId?: string;
   stripePriceEnv?: string;
   packFile?: string;
@@ -22,6 +23,7 @@ export const LIVE_PRICE_IDS = {
   "ads-swipe-pack": "price_1UJlwf4v69r4DPC8JZu7mVWh",
   "notion-crm-lite": "price_1UJweHGum6mar7mKS7M4BocS",
   "landing-page-pack": "price_1UJwlfGum6mar7mKl69AgJHC",
+  "front-desk-bundle": "price_1UKMKiGum6mar7mKlPdMyGG3",
 } as const;
 
 export const PRODUCTS: Product[] = [
@@ -189,6 +191,31 @@ export const PRODUCTS: Product[] = [
     status: "live",
     stripePriceEnv: "STRIPE_PRICE_REVIEW_REFERRAL_ROCKET",
     packFile: "review-referral-rocket.zip",
+  },
+  {
+    sku: "front-desk-bundle",
+    name: "Front Desk Bundle",
+    priceUsd: 79,
+    tagline: "Missed-call, reviews, and GBP posts in one zip.",
+    description:
+      "The front-desk stack: recover the missed call, ask for the review, and keep Google posts moving. Merge of Missed-Call Recovery + Review & Referral Rocket + GBP Post Pack.",
+    includes: [
+      "Missed-Call Recovery Pack (SMS + email + SOP)",
+      "Review & Referral Rocket Pack (scripts + QR tip + tracker)",
+      "GBP Post Pack (30 posts + 30-day calendar + paste SOP)",
+    ],
+    notIncluded: [
+      "A phone system",
+      "An SMS sender",
+      "Review software",
+      "A Google Business Profile login",
+    ],
+    status: "live",
+    featured: true,
+    badge: "Best for front desk",
+    stripePriceId: LIVE_PRICE_IDS["front-desk-bundle"],
+    stripePriceEnv: "STRIPE_PRICE_FRONT_DESK_BUNDLE",
+    packFile: "front-desk-bundle.zip",
   },
 ];
 
