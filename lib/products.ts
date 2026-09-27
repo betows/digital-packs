@@ -167,6 +167,29 @@ export const PRODUCTS: Product[] = [
     stripePriceEnv: "STRIPE_PRICE_LANDING_PAGE_PACK",
     packFile: "landing-page-pack.zip",
   },
+  {
+    sku: "review-referral-rocket",
+    name: "Review & Referral Rocket Pack",
+    priceUsd: 29,
+    tagline:
+      "SMS + email scripts to ask for Google reviews and referrals (dental / salon / HVAC) — without the awkward ask.",
+    description:
+      "Includes 1-page SOP, 30-second QR tip, and a simple CSV tracker. Pay once, unzip, no login.",
+    includes: [
+      "SMS + email scripts for dental, salon, and HVAC",
+      "1-page SOP",
+      "30-second QR tip",
+      "Simple CSV tracker",
+    ],
+    notIncluded: [
+      "Review software",
+      "SMS sender",
+      "Fake reviews",
+    ],
+    status: "live",
+    stripePriceEnv: "STRIPE_PRICE_REVIEW_REFERRAL_ROCKET",
+    packFile: "review-referral-rocket.zip",
+  },
 ];
 
 export function getProduct(sku: string | null | undefined): Product | undefined {
@@ -176,7 +199,10 @@ export function getProduct(sku: string | null | undefined): Product | undefined 
 
 export function getLiveProduct(sku: string | null | undefined): Product | undefined {
   const product = getProduct(sku);
-  if (!product || product.status !== "live" || !product.packFile || !product.stripePriceId) {
+  if (!product || product.status !== "live" || !product.packFile) {
+    return undefined;
+  }
+  if (!product.stripePriceId && !product.stripePriceEnv) {
     return undefined;
   }
   return product;
@@ -191,12 +217,15 @@ export function formatUsd(amount: number): string {
 }
 
 export function getStripePriceId(product: Product): string {
-  if (product.status !== "live" || !product.stripePriceId) {
+  if (product.status !== "live") {
     throw new Error(`SKU ${product.sku} is not for sale`);
   }
   if (product.stripePriceEnv) {
     const fromEnv = process.env[product.stripePriceEnv]?.trim();
     if (fromEnv) return fromEnv;
   }
-  return product.stripePriceId;
+  if (product.stripePriceId) {
+    return product.stripePriceId;
+  }
+  throw new Error(`SKU ${product.sku} is not for sale`);
 }
