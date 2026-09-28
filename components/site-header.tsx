@@ -8,6 +8,9 @@ export function SiteHeader() {
           Digital Packs
         </Link>
         <nav className="flex items-center gap-4 text-sm text-cream/80 sm:gap-5">
+          <Link href="/invoicebatch" className="transition hover:text-cream">
+            InvoiceBatch
+          </Link>
           <Link href="/free" className="transition hover:text-cream">
             Free sample
           </Link>

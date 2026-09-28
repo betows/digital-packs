@@ -3,10 +3,10 @@ import { existsSync } from "node:fs";
 import { describe, it } from "node:test";
 import { assertPaidSessionForSku } from "./entitlement.ts";
 import { getPackPath } from "./packs.ts";
-import { getLiveProduct, getProduct, getStripePriceId, PRODUCTS } from "./products.ts";
+import { getLiveProduct, getProduct, getSkuForPaymentLinkId, getSkuForStripePriceId, getStripePriceId, PRODUCTS } from "./products.ts";
 
 describe("catalog", () => {
-  it("exposes eight live SKUs with official Stripe price IDs", () => {
+  it("exposes nine live SKUs with official Stripe price IDs", () => {
     const live = [
       ["outbound-ops-kit", "price_1UJlu44v69r4DPC8TWmMaWwK", "outbound-ops-kit.zip"],
       ["gbp-post-pack", "price_1UJltG4v69r4DPC8dwKEfa3I", "gbp-post-pack.zip"],
@@ -40,7 +40,46 @@ describe("catalog", () => {
     assert.equal(bundle?.stripePriceId, "price_1UKMKiGum6mar7mKlPdMyGG3");
     assert.equal(bundle?.badge, "Best for front desk");
     assert.equal(existsSync(getPackPath("front-desk-bundle.zip")), true);
+
+    const invoicebatch = getLiveProduct("invoicebatch");
+    assert.equal(invoicebatch?.name, "InvoiceBatch");
+    assert.equal(invoicebatch?.priceUsd, 47);
+    assert.equal(invoicebatch?.packFile, "InvoiceBatch-v1.zip");
+    assert.equal(invoicebatch?.stripePriceEnv, "STRIPE_PRICE_INVOICEBATCH");
+    assert.equal(invoicebatch?.stripePriceId, "price_1UKjjXGum6mar7mK4xhHMieB");
+    assert.equal(invoicebatch?.stripePaymentLinkId, "plink_1UKjjXGum6mar7mKBCp3Qycd");
+    assert.equal(
+      invoicebatch?.stripePaymentLinkUrl,
+      "https://buy.stripe.com/3cI8wPews3n86RJa2B2wU00",
+    );
+    assert.equal(invoicebatch?.pagePath, "/invoicebatch");
+    assert.equal(invoicebatch?.successPath, "/invoicebatch/success");
+    assert.equal(existsSync(getPackPath("InvoiceBatch-v1.zip")), true);
+    assert.equal(
+      getSkuForPaymentLinkId("plink_1UKjjXGum6mar7mKBCp3Qycd"),
+      "invoicebatch",
+    );
+    assert.equal(
+      getSkuForStripePriceId("price_1UKjjXGum6mar7mK4xhHMieB"),
+      "invoicebatch",
+    );
     assert.equal(PRODUCTS.some((product) => /no-show/i.test(product.sku + product.name)), false);
+  });
+
+  it("reads invoicebatch checkout price from STRIPE_PRICE_INVOICEBATCH", () => {
+    const product = getLiveProduct("invoicebatch");
+    assert.ok(product);
+    const previous = process.env.STRIPE_PRICE_INVOICEBATCH;
+    process.env.STRIPE_PRICE_INVOICEBATCH = "price_test_invoicebatch";
+    try {
+      assert.equal(getStripePriceId(product), "price_test_invoicebatch");
+    } finally {
+      if (previous === undefined) {
+        delete process.env.STRIPE_PRICE_INVOICEBATCH;
+      } else {
+        process.env.STRIPE_PRICE_INVOICEBATCH = previous;
+      }
+    }
   });
 
   it("reads front-desk-bundle checkout price from STRIPE_PRICE_FRONT_DESK_BUNDLE", () => {
@@ -78,7 +117,7 @@ describe("catalog", () => {
   it("keeps unknown SKUs off the live checkout path", () => {
     assert.equal(getLiveProduct("ads-swipe"), undefined);
     assert.equal(getLiveProduct("coming-soon"), undefined);
-    assert.equal(PRODUCTS.filter((product) => product.status === "live").length, 8);
+    assert.equal(PRODUCTS.filter((product) => product.status === "live").length, 9);
     assert.equal(PRODUCTS.filter((product) => product.status === "coming-soon").length, 0);
   });
 });
@@ -103,6 +142,46 @@ describe("entitlement", () => {
       assertPaidSessionForSku(
         { payment_status: "paid", metadata: { sku: "gbp-post-pack" } },
         "outbound-ops-kit",
+      ).ok,
+      false,
+    );
+  });
+
+  it("accepts a paid Payment Link session by price id or payment link id", () => {
+    assert.equal(
+      assertPaidSessionForSku(
+        {
+          payment_status: "paid",
+          line_items: {
+            data: [{ price: { id: "price_1UKjjXGum6mar7mK4xhHMieB" } }],
+          },
+        },
+        "invoicebatch",
+        { priceId: "price_1UKjjXGum6mar7mK4xhHMieB" },
+      ).ok,
+      true,
+    );
+    assert.equal(
+      assertPaidSessionForSku(
+        {
+          payment_status: "paid",
+          payment_link: "plink_1UKjjXGum6mar7mKBCp3Qycd",
+        },
+        "invoicebatch",
+        { paymentLinkId: "plink_1UKjjXGum6mar7mKBCp3Qycd" },
+      ).ok,
+      true,
+    );
+    assert.equal(
+      assertPaidSessionForSku(
+        {
+          payment_status: "paid",
+          line_items: {
+            data: [{ price: { id: "price_other" } }],
+          },
+        },
+        "invoicebatch",
+        { priceId: "price_1UKjjXGum6mar7mK4xhHMieB" },
       ).ok,
       false,
     );

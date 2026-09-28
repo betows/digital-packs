@@ -7,10 +7,11 @@ export function buildCheckoutSessionParams(
   options?: { utm?: UtmParams; cancelPath?: string },
 ) {
   const cancelPath = safeRelativePath(options?.cancelPath);
+  const successPath = safeRelativePath(product.successPath, "/success");
   return {
     mode: "payment" as const,
     line_items: [{ price: getStripePriceId(product), quantity: 1 }],
-    success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}`,
+    success_url: `${origin}${successPath}?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${origin}${cancelPath}`,
     allow_promotion_codes: true,
     metadata: {

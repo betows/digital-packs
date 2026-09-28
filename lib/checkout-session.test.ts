@@ -24,4 +24,26 @@ describe("checkout session contract", () => {
       "/free?utm_source=reddit",
     );
   });
+
+  it("keeps invoicebatch on /invoicebatch/success with the live $47 price", () => {
+    const previous = process.env.STRIPE_PRICE_INVOICEBATCH;
+    delete process.env.STRIPE_PRICE_INVOICEBATCH;
+    try {
+      const product = getLiveProduct("invoicebatch");
+      assert.ok(product);
+      assert.equal(getStripePriceId(product), "price_1UKjjXGum6mar7mK4xhHMieB");
+      assert.equal(product.successPath, "/invoicebatch/success");
+      assert.equal(product.pagePath, "/invoicebatch");
+      assert.equal(
+        `${"https://digital-packs.vercel.app"}${product.successPath}?session_id={CHECKOUT_SESSION_ID}`,
+        "https://digital-packs.vercel.app/invoicebatch/success?session_id={CHECKOUT_SESSION_ID}",
+      );
+    } finally {
+      if (previous === undefined) {
+        delete process.env.STRIPE_PRICE_INVOICEBATCH;
+      } else {
+        process.env.STRIPE_PRICE_INVOICEBATCH = previous;
+      }
+    }
+  });
 });
