@@ -3,7 +3,7 @@ import type Stripe from "stripe";
 import { assertPaidSessionForSku } from "./entitlement";
 import { getPackPath } from "./packs";
 import { buildCheckoutSessionParams } from "./checkout-session";
-import { getLiveProduct } from "./products";
+import { getLiveProduct, getStripePriceId } from "./products";
 import type { UtmParams } from "./utm";
 
 export type CheckoutStart =
@@ -59,8 +59,13 @@ export async function fulfillPaidPack(
     return { ok: false, status: 400, error: "Unknown or unavailable SKU" };
   }
 
-  const session = await stripe.checkout.sessions.retrieve(sessionId);
-  const entitlement = assertPaidSessionForSku(session, sku);
+  const session = await stripe.checkout.sessions.retrieve(sessionId, {
+    expand: ["line_items.data.price"],
+  });
+  const entitlement = assertPaidSessionForSku(session, sku, {
+    priceId: getStripePriceId(product),
+    paymentLinkId: product.stripePaymentLinkId,
+  });
   if (!entitlement.ok) {
     return entitlement;
   }

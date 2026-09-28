@@ -17,7 +17,10 @@ export function SiteFooter() {
         <ul className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm text-cream/80">
           {live.map((product) => (
             <li key={product.sku}>
-              <Link href={`/#${product.sku}`} className="hover:text-cream">
+              <Link
+                href={product.pagePath ?? `/#${product.sku}`}
+                className="hover:text-cream"
+              >
                 {product.name}
               </Link>
             </li>

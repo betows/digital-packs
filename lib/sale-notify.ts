@@ -16,12 +16,17 @@ export type CheckoutSessionNotifySource = {
   customer_email?: string | null;
   customer_details?: { email?: string | null } | null;
   metadata?: { sku?: string | null } | null;
+  payment_link?: string | { id?: string | null } | null;
   line_items?: {
     data?: Array<{
-      price?: {
-        metadata?: { sku?: string | null } | null;
-        product?: unknown;
-      } | null;
+      price?:
+        | string
+        | {
+            id?: string | null;
+            metadata?: { sku?: string | null } | null;
+            product?: unknown;
+          }
+        | null;
     }>;
   } | null;
 };
@@ -41,6 +46,33 @@ function skuFromExpandedProduct(product: unknown): string {
   return metadata?.sku?.trim() ?? "";
 }
 
+function paymentLinkIdOf(
+  paymentLink: string | { id?: string | null } | null | undefined,
+): string {
+  if (typeof paymentLink === "string") return paymentLink.trim();
+  return paymentLink?.id?.trim() ?? "";
+}
+
+function skuFromPaymentLink(
+  paymentLink: string | { id?: string | null } | null | undefined,
+): string {
+  const id = paymentLinkIdOf(paymentLink);
+  if (id === "plink_1UKjjXGum6mar7mKBCp3Qycd") return "invoicebatch";
+  return "";
+}
+
+function skuFromPriceId(priceId: string | null | undefined): string {
+  const id = priceId?.trim() ?? "";
+  if (!id) return "";
+  const invoicebatchPrice =
+    process.env.STRIPE_PRICE_INVOICEBATCH?.trim() ||
+    "price_1UKjjXGum6mar7mK4xhHMieB";
+  if (id === invoicebatchPrice || id === "price_1UKjjXGum6mar7mK4xhHMieB") {
+    return "invoicebatch";
+  }
+  return "";
+}
+
 export function getSaleNotifyWebhookUrl(): string | null {
   const url = process.env.SALE_NOTIFY_WEBHOOK_URL?.trim();
   return url ? url : null;
@@ -56,11 +88,20 @@ export function extractSkuFromSession(session: CheckoutSessionNotifySource): str
   if (fromMeta) return fromMeta;
 
   const firstItem = session.line_items?.data?.[0];
-  const fromPrice = firstItem?.price?.metadata?.sku?.trim();
+  const price = firstItem?.price;
+  const priceObject = price && typeof price === "object" ? price : null;
+  const fromPrice = priceObject?.metadata?.sku?.trim();
   if (fromPrice) return fromPrice;
 
-  const fromProduct = skuFromExpandedProduct(firstItem?.price?.product);
+  const fromProduct = skuFromExpandedProduct(priceObject?.product);
   if (fromProduct) return fromProduct;
+
+  const fromPaymentLink = skuFromPaymentLink(session.payment_link);
+  if (fromPaymentLink) return fromPaymentLink;
+
+  const priceId = typeof price === "string" ? price : priceObject?.id;
+  const fromPriceId = skuFromPriceId(priceId);
+  if (fromPriceId) return fromPriceId;
 
   return "";
 }

@@ -74,6 +74,29 @@ describe("buildSaleNotifyPayload", () => {
     );
   });
 
+  it("falls back to Payment Link id and catalog price id", () => {
+    assert.equal(
+      buildSaleNotifyPayload({
+        id: "cs_pl",
+        amount_total: 4700,
+        currency: "usd",
+        payment_link: "plink_1UKjjXGum6mar7mKBCp3Qycd",
+      }).sku,
+      "invoicebatch",
+    );
+    assert.equal(
+      buildSaleNotifyPayload({
+        id: "cs_price",
+        amount_total: 4700,
+        currency: "usd",
+        line_items: {
+          data: [{ price: { id: "price_1UKjjXGum6mar7mK4xhHMieB" } }],
+        },
+      }).sku,
+      "invoicebatch",
+    );
+  });
+
   it("omits customer_email when Stripe did not collect one", () => {
     assert.deepEqual(
       buildSaleNotifyPayload({

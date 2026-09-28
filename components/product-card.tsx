@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { BuyButton } from "@/components/buy-button";
 import { formatUsd, type Product } from "@/lib/products";
 
@@ -42,11 +43,20 @@ export function ProductCard({ product }: { product: Product }) {
         Instant download after Stripe · 30-day email refund
       </p>
       <div className="mt-auto pt-6">
-        <BuyButton
-          sku={product.sku}
-          priceLabel={priceLabel}
-          available={live}
-        />
+        {product.pagePath ? (
+          <Link
+            href={product.pagePath}
+            className="inline-flex h-11 w-full items-center justify-center rounded-md bg-brass px-4 text-sm font-semibold text-ink transition hover:bg-brass-bright"
+          >
+            See kit — {priceLabel}
+          </Link>
+        ) : (
+          <BuyButton
+            sku={product.sku}
+            priceLabel={priceLabel}
+            available={live}
+          />
+        )}
       </div>
     </article>
   );

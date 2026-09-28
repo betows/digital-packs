@@ -13,8 +13,16 @@ export type Product = {
   badge?: string;
   stripePriceId?: string;
   stripePriceEnv?: string;
+  stripePaymentLinkId?: string;
+  stripePaymentLinkUrl?: string;
   packFile?: string;
+  pagePath?: string;
+  successPath?: string;
 };
+
+export const INVOICEBATCH_PAYMENT_LINK_ID = "plink_1UKjjXGum6mar7mKBCp3Qycd";
+export const INVOICEBATCH_PAYMENT_LINK_URL =
+  "https://buy.stripe.com/3cI8wPews3n86RJa2B2wU00";
 
 export const LIVE_PRICE_IDS = {
   "outbound-ops-kit": "price_1UJlu44v69r4DPC8TWmMaWwK",
@@ -24,6 +32,7 @@ export const LIVE_PRICE_IDS = {
   "notion-crm-lite": "price_1UJweHGum6mar7mKS7M4BocS",
   "landing-page-pack": "price_1UJwlfGum6mar7mKl69AgJHC",
   "front-desk-bundle": "price_1UKMKiGum6mar7mKlPdMyGG3",
+  invoicebatch: "price_1UKjjXGum6mar7mK4xhHMieB",
 } as const;
 
 export const PRODUCTS: Product[] = [
@@ -217,6 +226,34 @@ export const PRODUCTS: Product[] = [
     stripePriceEnv: "STRIPE_PRICE_FRONT_DESK_BUNDLE",
     packFile: "front-desk-bundle.zip",
   },
+  {
+    sku: "invoicebatch",
+    name: "InvoiceBatch",
+    priceUsd: 47,
+    tagline: "CSV in → branded invoice PDFs. One command, no monthly fee.",
+    description:
+      "A Python CLI for freelancers and small ops teams who already live in spreadsheets. Company brand, tax, and payment terms live in a 10-line JSON file.",
+    includes: [
+      "invoicebatch/ CLI (CSV → branded PDF)",
+      "Sample CSV and company.json",
+      "run.sh one-command launcher",
+      "README + license (personal and commercial invoices)",
+    ],
+    notIncluded: [
+      "Payment collection",
+      "QuickBooks / Wave / Stripe Invoicing sync",
+      "A hosted invoicing app",
+    ],
+    status: "live",
+    badge: "CLI kit",
+    stripePriceId: LIVE_PRICE_IDS.invoicebatch,
+    stripePriceEnv: "STRIPE_PRICE_INVOICEBATCH",
+    stripePaymentLinkId: INVOICEBATCH_PAYMENT_LINK_ID,
+    stripePaymentLinkUrl: INVOICEBATCH_PAYMENT_LINK_URL,
+    packFile: "InvoiceBatch-v1.zip",
+    pagePath: "/invoicebatch",
+    successPath: "/invoicebatch/success",
+  },
 ];
 
 export function getProduct(sku: string | null | undefined): Product | undefined {
@@ -255,4 +292,36 @@ export function getStripePriceId(product: Product): string {
     return product.stripePriceId;
   }
   throw new Error(`SKU ${product.sku} is not for sale`);
+}
+
+function paymentLinkIdOf(
+  paymentLink: string | { id?: string | null } | null | undefined,
+): string {
+  if (typeof paymentLink === "string") return paymentLink.trim();
+  return paymentLink?.id?.trim() ?? "";
+}
+
+export function getSkuForPaymentLinkId(
+  paymentLink: string | { id?: string | null } | null | undefined,
+): string {
+  const id = paymentLinkIdOf(paymentLink);
+  if (!id) return "";
+  return (
+    PRODUCTS.find((product) => product.stripePaymentLinkId === id)?.sku ?? ""
+  );
+}
+
+export function getSkuForStripePriceId(
+  priceId: string | null | undefined,
+): string {
+  const id = priceId?.trim() ?? "";
+  if (!id) return "";
+  for (const product of PRODUCTS) {
+    if (product.stripePriceId === id) return product.sku;
+    const fromEnv = product.stripePriceEnv
+      ? process.env[product.stripePriceEnv]?.trim()
+      : "";
+    if (fromEnv && fromEnv === id) return product.sku;
+  }
+  return "";
 }
