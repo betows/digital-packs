@@ -4,7 +4,7 @@ import { MetaPixel } from "@/components/meta-pixel";
 import { formatUsd, getProduct } from "@/lib/products";
 
 export const metadata: Metadata = {
-  title: "InvoiceBatch — CSV to branded invoice PDFs",
+  title: "InvoiceBatch — CSV to Invoice PDFs in Your Browser",
   description:
     "Turn a simple CSV into branded invoice PDFs in your browser. No install, unlimited invoices, no monthly fee. US$47 one-time. CLI zip included as a bonus. 30-day email refund.",
 };
@@ -20,15 +20,15 @@ const PROOF = [
   },
   {
     title: "Your brand.",
-    body: "Company name, colors, tax ID, payment terms in a 10-line JSON.",
+    body: "Add your company details and pick an accent color in the app.",
   },
   {
     title: "Tax-aware.",
     body: "Per-line tax %; subtotal / tax / TOTAL calculated for you.",
   },
   {
-    title: "Dry-run mode.",
-    body: "Preview the plan before writing a single file.",
+    title: "Preview before download.",
+    body: "Every row is checked before you get the ZIP.",
   },
   {
     title: "Real files today.",
@@ -147,34 +147,10 @@ export default function InvoiceBatchPage() {
             Who it&apos;s for
           </h2>
           <p className="mt-4 text-sm leading-7 text-muted sm:text-base">
-            Freelancers, studios, and small ops teams who already live in
-            spreadsheets — and refuse another $30/mo invoicing SaaS for
-            something a script should finish in seconds.
+            Freelancers, bookkeepers, VAs and small agencies who bill from a
+            spreadsheet — and refuse another monthly invoicing subscription for
+            something that should take seconds.
           </p>
-        </section>
-
-        <section className="mt-16">
-          <h2 className="font-serif text-3xl tracking-tight text-cream">
-            What&apos;s in the ZIP
-          </h2>
-          <div className="mt-6 overflow-x-auto rounded-xl border border-line">
-            <table className="w-full min-w-[28rem] text-left text-sm">
-              <thead className="bg-paper-muted text-[11px] font-semibold tracking-[0.14em] text-muted uppercase">
-                <tr>
-                  <th className="px-4 py-3">Item</th>
-                  <th className="px-4 py-3">Why you care</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-line text-cream/85">
-                {ZIP_CONTENTS.map((row) => (
-                  <tr key={row.item}>
-                    <td className="px-4 py-3 font-mono text-[13px]">{row.item}</td>
-                    <td className="px-4 py-3 text-muted">{row.why}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
         </section>
 
         <section className="mt-16">
@@ -199,6 +175,30 @@ export default function InvoiceBatchPage() {
               {`./run.sh --csv your-invoices.csv --config company.json --out ./invoices`}
             </code>
           </pre>
+        </section>
+
+        <section className="mt-16">
+          <h2 className="font-serif text-3xl tracking-tight text-cream">
+            Bonus: Python CLI
+          </h2>
+          <div className="mt-6 overflow-x-auto rounded-xl border border-line">
+            <table className="w-full min-w-[28rem] text-left text-sm">
+              <thead className="bg-paper-muted text-[11px] font-semibold tracking-[0.14em] text-muted uppercase">
+                <tr>
+                  <th className="px-4 py-3">Item</th>
+                  <th className="px-4 py-3">Why you care</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-line text-cream/85">
+                {ZIP_CONTENTS.map((row) => (
+                  <tr key={row.item}>
+                    <td className="px-4 py-3 font-mono text-[13px]">{row.item}</td>
+                    <td className="px-4 py-3 text-muted">{row.why}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </section>
 
         <section className="mt-16">
