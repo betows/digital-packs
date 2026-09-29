@@ -1,21 +1,18 @@
 import type { Metadata } from "next";
+import { BuyButton } from "@/components/buy-button";
 import { MetaPixel } from "@/components/meta-pixel";
-import {
-  formatUsd,
-  getProduct,
-  INVOICEBATCH_PAYMENT_LINK_URL,
-} from "@/lib/products";
+import { formatUsd, getProduct } from "@/lib/products";
 
 export const metadata: Metadata = {
   title: "InvoiceBatch — CSV to branded invoice PDFs",
   description:
-    "Turn a simple CSV into branded invoice PDFs. One command, unlimited invoices, no monthly fee. US$47 one-time. Instant ZIP. 30-day email refund.",
+    "Turn a simple CSV into branded invoice PDFs in your browser. No install, unlimited invoices, no monthly fee. US$47 one-time. CLI zip included as a bonus. 30-day email refund.",
 };
 
 const PROOF = [
   {
-    title: "One dependency.",
-    body: "Python + reportlab. No cloud login.",
+    title: "No install.",
+    body: "Runs in your browser. CSV never leaves this device. CLI zip included as a bonus.",
   },
   {
     title: "Batch-native.",
@@ -49,16 +46,16 @@ const ZIP_CONTENTS = [
 ] as const;
 
 const STEPS = [
-  "Edit company.json with your name, address, accent color.",
-  "Fill the CSV (or export from Sheets).",
-  "Run the command below. Email the PDFs. Done.",
+  "Set your company name, address, and accent color.",
+  "Fill the CSV (or export from Sheets) and upload it.",
+  "Download the ZIP of PDFs. Email them. Done.",
 ] as const;
 
 const FAQS = [
   {
     question: "Do I need to know Python?",
     answer:
-      "No. If you can open Terminal (or PowerShell) and paste one command, you're fine. The README walks you through it.",
+      "No. The browser app is the default — upload a CSV, download a ZIP. The Python CLI is a bonus for technical buyers.",
   },
   {
     question: "Does it work on Windows?",
@@ -91,15 +88,8 @@ const FAQS = [
   },
 ] as const;
 
-function BuyLink({ label }: { label: string }) {
-  return (
-    <a
-      href={INVOICEBATCH_PAYMENT_LINK_URL}
-      className="inline-flex h-12 items-center justify-center rounded-md bg-brass px-5 text-sm font-semibold text-ink transition hover:bg-brass-bright"
-    >
-      {label}
-    </a>
-  );
+function BuyCta({ label }: { label: string }) {
+  return <BuyButton sku="invoicebatch" priceLabel={label} available featured />;
 }
 
 export default function InvoiceBatchPage() {
@@ -114,21 +104,25 @@ export default function InvoiceBatchPage() {
       <MetaPixel />
       <article className="mx-auto max-w-3xl px-5 pt-16 pb-20 sm:px-8 sm:pt-24">
         <p className="text-[11px] font-semibold tracking-[0.2em] text-brass uppercase">
-          US$47 · Instant ZIP · 30-day email refund
+          US$47 · Browser app · 30-day email refund
         </p>
         <h1 className="mt-4 font-serif text-4xl leading-[1.1] tracking-tight text-cream sm:text-5xl">
           Stop rebuilding the same invoice in Google Docs.
         </h1>
         <p className="mt-6 text-base leading-7 text-muted sm:text-lg">
           <strong className="font-semibold text-cream">InvoiceBatch</strong>{" "}
-          turns a simple CSV into branded invoice PDFs — one command, unlimited
-          invoices, no monthly fee.
+          turns a simple CSV into branded invoice PDFs in your browser — no
+          install, unlimited invoices, no monthly fee. The Python CLI stays in
+          the zip as a bonus.
         </p>
         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
-          <BuyLink label={`Buy InvoiceBatch — ${priceLabel} →`} />
+          <BuyCta label={priceLabel} />
         </div>
         <p className="mt-3 text-sm text-muted">
-          Unzip → run → send. Works offline. macOS / Windows / Linux.
+          Works in your browser, no install. CLI zip included as a bonus download.{" "}
+          <a href="/invoicebatch/app" className="text-cream/85 underline-offset-4 hover:underline">
+            Already bought? Open the app
+          </a>
         </p>
 
         <section className="mt-16">
@@ -197,7 +191,10 @@ export default function InvoiceBatchPage() {
               </li>
             ))}
           </ol>
-          <pre className="mt-6 overflow-x-auto rounded-xl border border-line bg-paper-muted/60 p-4 font-mono text-[13px] leading-6 text-cream/90">
+          <p className="mt-6 text-sm text-muted">
+            Bonus CLI (same CSV columns) if you prefer the terminal:
+          </p>
+          <pre className="mt-3 overflow-x-auto rounded-xl border border-line bg-paper-muted/60 p-4 font-mono text-[13px] leading-6 text-cream/90">
             <code>
               {`./run.sh --csv your-invoices.csv --config company.json --out ./invoices`}
             </code>
@@ -221,10 +218,11 @@ export default function InvoiceBatchPage() {
             Get InvoiceBatch — {priceLabel}
           </h2>
           <p className="mt-3 text-sm leading-6 text-muted">
-            Instant download. Offline forever. 30-day email refund.
+            Works in your browser, no install. CLI zip as a bonus. 30-day email
+            refund.
           </p>
           <div className="mt-6">
-            <BuyLink label="Get the ZIP →" />
+            <BuyCta label={priceLabel} />
           </div>
         </section>
       </article>

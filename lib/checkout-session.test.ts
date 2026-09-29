@@ -25,18 +25,18 @@ describe("checkout session contract", () => {
     );
   });
 
-  it("keeps invoicebatch on /invoicebatch/success with the live $47 price", () => {
+  it("keeps invoicebatch checkout on the access verifier with the live $47 price", () => {
     const previous = process.env.STRIPE_PRICE_INVOICEBATCH;
     delete process.env.STRIPE_PRICE_INVOICEBATCH;
     try {
       const product = getLiveProduct("invoicebatch");
       assert.ok(product);
       assert.equal(getStripePriceId(product), "price_1UKjjXGum6mar7mK4xhHMieB");
-      assert.equal(product.successPath, "/invoicebatch/success");
+      assert.equal(product.successPath, "/api/invoicebatch/access");
       assert.equal(product.pagePath, "/invoicebatch");
       assert.equal(
         `${"https://digital-packs.vercel.app"}${product.successPath}?session_id={CHECKOUT_SESSION_ID}`,
-        "https://digital-packs.vercel.app/invoicebatch/success?session_id={CHECKOUT_SESSION_ID}",
+        "https://digital-packs.vercel.app/api/invoicebatch/access?session_id={CHECKOUT_SESSION_ID}",
       );
     } finally {
       if (previous === undefined) {
