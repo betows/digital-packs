@@ -41,4 +41,24 @@ INV-2,Acme,2026-09-01,Bad qty,nope,50
     assert.match(result.errors[0].message, /invoice_number is empty/);
     assert.match(result.errors[1].message, /qty must be a number/);
   });
+
+  it("keeps quoted commas and newlines on one field", () => {
+    const csv = `invoice_number,client_name,date,description,qty,unit_price,client_address
+INV-1,"Acme, Inc",2026-09-01,"Design, v2",1,100,"2210 Oak Ave
+Austin, TX 78704"
+`;
+    const result = parseInvoiceCsv(csv);
+    assert.equal(result.ok, true);
+    assert.equal(result.invoices[0].clientName, "Acme, Inc");
+    assert.equal(result.invoices[0].items[0].description, "Design, v2");
+    assert.match(result.invoices[0].clientAddress, /Austin, TX 78704/);
+  });
+
+  it("reports an unclosed quote instead of inventing rows", () => {
+    const result = parseInvoiceCsv(
+      `invoice_number,client_name,date,description,qty,unit_price\nINV-1,"Acme,2026-09-01,Design,1,100\n`,
+    );
+    assert.equal(result.ok, false);
+    assert.match(result.errors[0]?.message ?? "", /unclosed quote/i);
+  });
 });

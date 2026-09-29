@@ -1,12 +1,10 @@
 "use client";
 
-import { useMemo, useState, type ChangeEvent, type DragEvent } from "react";
+import { useMemo, useRef, useState, type ChangeEvent, type DragEvent, type KeyboardEvent } from "react";
 import { parseInvoiceCsv } from "@/lib/invoicebatch/csv";
 import { formatMoney } from "@/lib/invoicebatch/money";
-import { renderInvoicePdf } from "@/lib/invoicebatch/pdf";
 import { SAMPLE_COMPANY, SAMPLE_CSV, SAMPLE_CSV_FILENAME } from "@/lib/invoicebatch/sample";
 import type { Company, ParseResult } from "@/lib/invoicebatch/types";
-import { zipInvoicePdfs } from "@/lib/invoicebatch/zip";
 import { CLI_DOWNLOAD_PATH } from "@/lib/invoicebatch-access-constants";
 
 function downloadBlob(filename: string, blob: Blob) {
@@ -67,6 +65,7 @@ export function InvoiceBatchApp({ bookmarkUrl }: { bookmarkUrl: string }) {
   const [busy, setBusy] = useState(false);
   const [zipError, setZipError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const validCount = parsed?.invoices.length ?? 0;
   const errorCount = parsed?.errors.length ?? 0;
@@ -77,7 +76,12 @@ export function InvoiceBatchApp({ bookmarkUrl }: { bookmarkUrl: string }) {
   async function ingestCsv(text: string, name: string) {
     setFileName(name);
     setZipError(null);
-    setParsed(parseInvoiceCsv(text));
+    try {
+      setParsed(parseInvoiceCsv(text));
+    } catch (error) {
+      setParsed(null);
+      setZipError(error instanceof Error ? error.message : "Could not parse CSV");
+    }
   }
 
   async function onFile(file: File | undefined) {
@@ -88,10 +92,22 @@ export function InvoiceBatchApp({ bookmarkUrl }: { bookmarkUrl: string }) {
 
   function onInput(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
+    event.target.value = "";
     void onFile(file);
   }
 
-  function onDrop(event: DragEvent<HTMLLabelElement>) {
+  function openFilePicker() {
+    fileInputRef.current?.click();
+  }
+
+  function onDropZoneKey(event: KeyboardEvent<HTMLDivElement>) {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      openFilePicker();
+    }
+  }
+
+  function onDrop(event: DragEvent<HTMLDivElement>) {
     event.preventDefault();
     setDragOver(false);
     const file = event.dataTransfer.files?.[0];
@@ -110,6 +126,7 @@ export function InvoiceBatchApp({ bookmarkUrl }: { bookmarkUrl: string }) {
     setBusy(true);
     setZipError(null);
     try {
+      const { zipInvoicePdfs } = await import("@/lib/invoicebatch/zip");
       const bytes = await zipInvoicePdfs(parsed.invoices, company);
       downloadBytes("invoicebatch-invoices.zip", bytes, "application/zip");
     } catch (error) {
@@ -125,6 +142,7 @@ export function InvoiceBatchApp({ bookmarkUrl }: { bookmarkUrl: string }) {
     setBusy(true);
     setZipError(null);
     try {
+      const { renderInvoicePdf } = await import("@/lib/invoicebatch/pdf");
       const pdf = await renderInvoicePdf(invoice, company);
       downloadBytes(
         `invoice-${invoice.invoiceNumber.replace(/[^A-Za-z0-9_-]/g, "_")}.pdf`,
@@ -168,6 +186,14 @@ export function InvoiceBatchApp({ bookmarkUrl }: { bookmarkUrl: string }) {
           className="inline-flex h-11 items-center justify-center rounded-md border border-line px-4 text-sm text-cream/85 transition hover:border-cream/30"
         >
           Download sample CSV
+        </button>
+        <button
+          type="button"
+          data-testid="preview-sample-csv"
+          onClick={() => void ingestCsv(SAMPLE_CSV, SAMPLE_CSV_FILENAME)}
+          className="inline-flex h-11 items-center justify-center rounded-md border border-line px-4 text-sm text-cream/85 transition hover:border-cream/30"
+        >
+          Preview sample CSV
         </button>
       </div>
       <p className="mt-3 text-xs leading-5 text-muted">
@@ -250,7 +276,20 @@ export function InvoiceBatchApp({ bookmarkUrl }: { bookmarkUrl: string }) {
           unit_price. Optional: client_email, client_address, due_date, tax_rate,
           notes, currency. Same invoice_number groups line items onto one PDF.
         </p>
-        <label
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".csv,text/csv"
+          className="hidden"
+          data-testid="csv-file-input"
+          onChange={onInput}
+        />
+        <div
+          role="button"
+          tabIndex={0}
+          data-testid="csv-dropzone"
+          onClick={openFilePicker}
+          onKeyDown={onDropZoneKey}
           onDragOver={(event) => {
             event.preventDefault();
             setDragOver(true);
@@ -265,14 +304,14 @@ export function InvoiceBatchApp({ bookmarkUrl }: { bookmarkUrl: string }) {
           <span className="mt-1 text-xs text-muted">
             {fileName || "No file selected"}
           </span>
-          <input
-            type="file"
-            accept=".csv,text/csv"
-            className="sr-only"
-            onChange={onInput}
-          />
-        </label>
+        </div>
       </section>
+
+      {zipError && !parsed ? (
+        <p className="mt-4 text-sm text-rose-300" role="alert">
+          {zipError}
+        </p>
+      ) : null}
 
       {parsed ? (
         <section className="mt-8">
@@ -286,6 +325,7 @@ export function InvoiceBatchApp({ bookmarkUrl }: { bookmarkUrl: string }) {
             </div>
             <button
               type="button"
+              data-testid="download-zip"
               onClick={() => void downloadZip()}
               disabled={!canZip || busy}
               className="inline-flex h-11 items-center justify-center rounded-md bg-brass px-4 text-sm font-semibold text-ink transition hover:bg-brass-bright disabled:cursor-not-allowed disabled:opacity-50"
@@ -307,7 +347,7 @@ export function InvoiceBatchApp({ bookmarkUrl }: { bookmarkUrl: string }) {
           ) : null}
           {previewRows.length > 0 ? (
             <div className="mt-4 overflow-x-auto rounded-xl border border-line">
-              <table className="w-full min-w-[36rem] text-left text-sm">
+              <table data-testid="invoice-preview" className="w-full min-w-[36rem] text-left text-sm">
                 <thead className="bg-paper-muted text-[11px] font-semibold tracking-[0.14em] text-muted uppercase">
                   <tr>
                     <th className="px-4 py-3">Invoice</th>

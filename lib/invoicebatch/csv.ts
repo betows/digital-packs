@@ -1,4 +1,3 @@
-import Papa from "papaparse";
 import { invoiceTotals } from "./money.ts";
 import type { Invoice, LineItem, ParseResult, RowError } from "./types.ts";
 
@@ -19,6 +18,11 @@ export const OPTIONAL_COLUMNS = [
   "notes",
   "currency",
 ] as const;
+
+type CsvTable = {
+  fields: string[];
+  data: Record<string, string>[];
+};
 
 function parseNumber(raw: string, field: string, row: number): { ok: true; value: number } | { ok: false; error: RowError } {
   const s = raw.trim().replace(/[$,]/g, "");
@@ -42,6 +46,90 @@ function cell(
   return value.trim();
 }
 
+/** RFC 4180 CSV (quoted commas/newlines) so parsing never depends on a UMD browser bundle. */
+export function parseCsvTable(csvText: string): CsvTable {
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let field = "";
+  let inQuotes = false;
+  let i = 0;
+
+  if (csvText.charCodeAt(0) === 0xfeff) i = 1;
+
+  const pushField = () => {
+    row.push(field);
+    field = "";
+  };
+
+  const pushRow = () => {
+    if (row.some((value) => value.trim() !== "")) {
+      rows.push(row);
+    }
+    row = [];
+  };
+
+  while (i < csvText.length) {
+    const ch = csvText[i];
+    if (inQuotes) {
+      if (ch === '"') {
+        if (csvText[i + 1] === '"') {
+          field += '"';
+          i += 2;
+          continue;
+        }
+        inQuotes = false;
+        i += 1;
+        continue;
+      }
+      field += ch;
+      i += 1;
+      continue;
+    }
+    if (ch === '"') {
+      inQuotes = true;
+      i += 1;
+      continue;
+    }
+    if (ch === ",") {
+      pushField();
+      i += 1;
+      continue;
+    }
+    if (ch === "\n" || ch === "\r") {
+      if (ch === "\r" && csvText[i + 1] === "\n") i += 1;
+      pushField();
+      pushRow();
+      i += 1;
+      continue;
+    }
+    field += ch;
+    i += 1;
+  }
+
+  if (inQuotes) {
+    throw new Error("CSV has an unclosed quote");
+  }
+  if (field.length > 0 || row.length > 0) {
+    pushField();
+    pushRow();
+  }
+
+  if (rows.length === 0) {
+    return { fields: [], data: [] };
+  }
+
+  const fields = rows[0].map((header) => header.replace(/^\uFEFF/, "").trim().toLowerCase());
+  const data = rows.slice(1).map((cells) => {
+    const record: Record<string, string> = {};
+    fields.forEach((name, index) => {
+      if (!name) return;
+      record[name] = cells[index] ?? "";
+    });
+    return record;
+  });
+  return { fields, data };
+}
+
 export function parseInvoiceCsv(csvText: string): ParseResult {
   const errors: RowError[] = [];
   const warnings: RowError[] = [];
@@ -56,24 +144,25 @@ export function parseInvoiceCsv(csvText: string): ParseResult {
     };
   }
 
-  const parsed = Papa.parse<Record<string, string>>(csvText, {
-    header: true,
-    skipEmptyLines: true,
-    transformHeader: (header) => header.replace(/^\uFEFF/, "").trim().toLowerCase(),
-  });
-
-  for (const issue of parsed.errors) {
-    if (issue.type === "Delimiter" || issue.code === "UndetectableDelimiter") {
-      continue;
-    }
-    const row = (issue.row ?? 0) + 1;
-    errors.push({
-      row,
-      message: `Row ${row}: ${issue.message}`,
-    });
+  let parsed: CsvTable;
+  try {
+    parsed = parseCsvTable(csvText);
+  } catch (error) {
+    return {
+      ok: false,
+      invoices: [],
+      previews: [],
+      errors: [
+        {
+          row: 1,
+          message: error instanceof Error ? error.message : "Could not parse CSV",
+        },
+      ],
+      warnings,
+    };
   }
 
-  const fields = (parsed.meta.fields ?? []).map((field) => field.trim().toLowerCase());
+  const fields = parsed.fields;
   const fieldSet = new Set(fields.filter(Boolean));
   const missing = REQUIRED_COLUMNS.filter((column) => !fieldSet.has(column));
   if (missing.length > 0) {
