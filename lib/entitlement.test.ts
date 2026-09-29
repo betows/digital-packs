@@ -53,7 +53,7 @@ describe("catalog", () => {
       "https://buy.stripe.com/3cI8wPews3n86RJa2B2wU00",
     );
     assert.equal(invoicebatch?.pagePath, "/invoicebatch");
-    assert.equal(invoicebatch?.successPath, "/invoicebatch/success");
+    assert.equal(invoicebatch?.successPath, "/api/invoicebatch/access");
     assert.equal(existsSync(getPackPath("InvoiceBatch-v1.zip")), true);
     assert.equal(
       getSkuForPaymentLinkId("plink_1UKjjXGum6mar7mKBCp3Qycd"),

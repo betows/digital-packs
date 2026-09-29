@@ -252,7 +252,7 @@ export const PRODUCTS: Product[] = [
     stripePaymentLinkUrl: INVOICEBATCH_PAYMENT_LINK_URL,
     packFile: "InvoiceBatch-v1.zip",
     pagePath: "/invoicebatch",
-    successPath: "/invoicebatch/success",
+    successPath: "/api/invoicebatch/access",
   },
 ];
 
